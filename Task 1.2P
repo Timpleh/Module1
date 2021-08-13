@@ -1,0 +1,73 @@
+// The purpose of this arduino board is to check if the temperature is warm enough when using heater
+// The LEDs are used as indicator whether the room is warm enough or not
+// Temperature Sensor TMP36 is used as input for temperature reading
+
+//Initiate button pin
+const uint8_t BTN_PIN = 2;
+
+//set button previous state to low
+uint8_t buttonPrevState = LOW;
+
+void setup()
+{
+  Serial.begin(9600);
+  pinMode(BTN_PIN, INPUT);
+  pinMode(13, OUTPUT);
+  pinMode(12, OUTPUT);
+  pinMode(11, OUTPUT);
+  
+  attachInterrupt(digitalPinToInterrupt(BTN_PIN), checkTemp, FALLING);
+}
+
+void loop()
+{
+  
+}
+
+void checkTemp()
+{
+  int read = analogRead(A0);
+  // measure the 5v with a meter for an accurate value
+  // In particular if your Arduino is USB powered
+  float voltage = read * 4.68;
+  voltage /= 1024.0;
+  
+  // now print out the temperature
+  float temperatureC = (voltage - 0.5) * 100;
+  Serial.print(temperatureC);
+  Serial.println(" degrees");
+  
+  if (temperatureC <= 20) {
+    // if the temperature is less or equal than 20
+    // set red LED to HIGH
+    Serial.println("Set red LED to HIGH");
+    digitalWrite(13, LOW);
+    digitalWrite(12, LOW);
+    digitalWrite(11, LOW);
+    digitalWrite(13, HIGH);
+  }
+  else if (temperatureC <= 25) {
+    // if the temperature is less or equal than 25
+    // set yellow LED to HIGH
+    Serial.println("Set yellow LED to HIGH");
+    digitalWrite(13, LOW);
+    digitalWrite(12, LOW);
+    digitalWrite(11, LOW);
+    digitalWrite(12, HIGH);
+  }
+  else {
+    // if the temperature is more than 25 
+    // set green LED to HIGH
+    Serial.println("Set green LED to HIGH");
+    digitalWrite(13, LOW);
+    digitalWrite(12, LOW);
+    digitalWrite(11, LOW);
+    digitalWrite(11, HIGH);
+  }
+  
+  delay(5000);
+  digitalWrite(13, LOW);
+  digitalWrite(12, LOW);
+  digitalWrite(11, LOW);
+  
+}
