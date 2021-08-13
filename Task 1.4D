@@ -1,0 +1,106 @@
+// The purpose of this arduino board is to check if the temperature is warm enough when using heater
+// The LEDs are used as indicator whether the room is warm enough or not
+// The LEDS will only be activated if the button is pressed or if a human is detected by PIR sensor
+// Temperature Sensor TMP36 is used as input for temperature reading
+
+
+
+//Initiate button, pir, and force pin
+const uint8_t BTN_PIN = 2;
+const uint8_t PIR_PIN = 3;
+const uint8_t FOR_PIN = 4;
+
+//set button previous state to low
+uint8_t buttonPrevState = LOW;
+
+void setup()
+{
+  noInterrupts();
+  
+  Serial.begin(9600);
+  pinMode(BTN_PIN, INPUT);
+  pinMode(PIR_PIN, INPUT);
+  pinMode(FOR_PIN, INPUT);
+  pinMode(13, OUTPUT);
+  pinMode(12, OUTPUT);
+  pinMode(11, OUTPUT);
+  pinMode(9, OUTPUT);
+  
+  //Enable PCIE2 (PCINT16 to PCINT23)
+  PCICR |= B00000100;
+  
+  //D4, D5, and D6 will trigger interrupt
+  PCMSK2 |= B00011100;	
+  
+  TCCR1A = 0;// set entire TCCR1A register to 0
+  TCCR1B = 0;// same for TCCR1B
+  TCNT1  = 0;//initialize counter value to 0
+  
+  TCCR1B |= B00000100;//Set CS12 to 1 so we get prescalar 256
+  TIMSK1 |= B00000010;//Set OCIE1A to 1 so we enable compare match A
+  OCR1A = 31250;//Finally we set compare register A to this value
+  
+  interrupts();
+}
+
+void loop()
+{
+
+}
+
+//IRS will trigger each 500ms.
+ISR(TIMER1_COMPA_vect){
+  //Reset timer back to 0
+  TCNT1  = 0;
+  
+  //LED Indicating the Arduino is ON
+  digitalWrite(9, HIGH);
+  digitalWrite(9, LOW);
+}
+
+//ISR for vector 2
+  ISR (PCINT2_vect){
+	  int read = analogRead(A0);
+  // measure the 5v with a meter for an accurate value
+  // In particular if your Arduino is USB powered
+  float voltage = read * 4.68;
+  voltage /= 1024.0;
+  
+  // now print out the temperature
+  float temperatureC = (voltage - 0.5) * 100;
+  Serial.print(temperatureC);
+  Serial.println(" degrees");
+  
+  if (temperatureC <= 20) {
+    // if the temperature is less or equal than 20
+    // set red LED to HIGH
+    Serial.println("Set red LED to HIGH");
+    digitalWrite(13, LOW);
+    digitalWrite(12, LOW);
+    digitalWrite(11, LOW);
+    digitalWrite(13, HIGH);
+  }
+  else if (temperatureC <= 25) {
+    // if the temperature is less or equal than 25
+    // set yellow LED to HIGH
+    Serial.println("Set yellow LED to HIGH");
+    digitalWrite(13, LOW);
+    digitalWrite(12, LOW);
+    digitalWrite(11, LOW);
+    digitalWrite(12, HIGH);
+  }
+  else {
+    // if the temperature is more than 25 
+    // set green LED to HIGH
+    Serial.println("Set green LED to HIGH");
+    digitalWrite(13, LOW);
+    digitalWrite(12, LOW);
+    digitalWrite(11, LOW);
+    digitalWrite(11, HIGH);
+  }
+  
+  delay(5000);
+  digitalWrite(13, LOW);
+  digitalWrite(12, LOW);
+  digitalWrite(11, LOW);
+}
